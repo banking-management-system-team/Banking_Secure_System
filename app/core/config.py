@@ -1,0 +1,28 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv(override=True)
+
+
+class Settings:
+
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL is not set. Set it in .env for Supabase."
+        )
+
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        raise RuntimeError(
+            "SECRET_KEY is not set. Set it in .env."
+        )
+
+    ALGORITHM = os.getenv("ALGORITHM", "HS256")
+
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(
+        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+    )
+
+
+settings = Settings()

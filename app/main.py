@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from app.core.database import Base, engine
+from app.routers.account_router import router as account_router
 
 from app.core.database import (
     engine,
@@ -22,3 +24,4 @@ def home():
     return {
         'message': 'Banking API Running Successfully'
     }
+app.include_router(account_router)

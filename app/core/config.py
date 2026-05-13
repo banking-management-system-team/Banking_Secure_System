@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
-load_dotenv(override=True)
+root_dir = Path(__file__).resolve().parents[2]
+load_dotenv(root_dir / ".env", override=True, encoding="utf-8-sig")
 
 
 class Settings:

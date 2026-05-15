@@ -1,8 +1,14 @@
-from fastapi import APIRouter, Depends
+# app/routers/transaction_router.py
+
+from fastapi import APIRouter
+from fastapi import Depends
+
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
+
+from app.models.user_model import User
 
 from app.schemas.transaction_schema import (
     DepositSchema,
@@ -11,9 +17,9 @@ from app.schemas.transaction_schema import (
     TransactionResponse
 )
 
-from app.services.transaction_service import TransactionService
-
-
+from app.services.transaction_service import (
+    TransactionService
+)
 
 
 router = APIRouter(
@@ -28,8 +34,8 @@ router = APIRouter(
 )
 def deposit_money(
     payload: DepositSchema,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     return TransactionService.deposit(
@@ -46,8 +52,8 @@ def deposit_money(
 )
 def withdraw_money(
     payload: WithdrawSchema,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     return TransactionService.withdraw(
@@ -64,15 +70,15 @@ def withdraw_money(
 )
 def transfer_money(
     payload: TransferSchema,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     return TransactionService.transfer(
         db,
         current_user,
-        payload.sender_account,
-        payload.receiver_account,
+        payload.sender_account_number,
+        payload.receiver_account_number,
         payload.amount
     )
 
@@ -82,8 +88,8 @@ def transfer_money(
 )
 def transaction_history(
     account_number: str,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     return TransactionService.get_history(
@@ -99,12 +105,11 @@ def transaction_history(
 )
 def transaction_details(
     transaction_id: int,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     return TransactionService.get_transaction(
         db,
-        current_user,
         transaction_id
     )

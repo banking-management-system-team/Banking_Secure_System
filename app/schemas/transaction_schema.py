@@ -1,41 +1,48 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
 
 
 class DepositSchema(BaseModel):
+
     account_number: str
     amount: float
-
-    class Config:
-        from_attributes = True
 
 
 class WithdrawSchema(BaseModel):
+
     account_number: str
     amount: float
 
-    class Config:
-        from_attributes = True
-
 
 class TransferSchema(BaseModel):
-    sender_account: str
-    receiver_account: str
-    amount: float
 
-    class Config:
-        from_attributes = True
+    sender_account_number: str
+    receiver_account_number: str
+    amount: float
 
 
 class TransactionResponse(BaseModel):
+
     id: int
-    sender_account: Optional[str]
-    receiver_account: Optional[str]
+
+    # Deposit & Withdraw
+    account_id: int | None = None
+
+    # Transfer
+    sender_account_id: int | None = None
+
+    receiver_account_id: int | None = None
+
     amount: float
+
     transaction_type: str
+
     status: str
+
+    description: str | None = None
+
     created_at: datetime
 
     class Config:
+
         from_attributes = True

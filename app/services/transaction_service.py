@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.account_repository import AccountRepository
+
 from app.models.user_model import User
 
 
@@ -15,17 +16,25 @@ class TransactionService:
         account_number: str,
         amount: float
     ):
-        receiver_account = AccountRepository.get_account_by_number(
-            db,
-            account_number
-        )
-        print(f"Depositing {amount} to account: {account_number} for user: {user.email}")
-        print(f"Receiver account details: {receiver_account}")
 
-        if not receiver_account:
+        account = (
+            AccountRepository.get_account_by_number(
+                db,
+                account_number
+            )
+        )
+
+        if not account:
             raise HTTPException(
                 status_code=404,
-                detail="Receiver account not found"
+                detail="Account not found"
+            )
+
+        # Logged-in user can use only own account
+        if account.user_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Not authorized"
             )
 
         if amount <= 0:
@@ -34,13 +43,21 @@ class TransactionService:
                 detail="Amount must be greater than zero"
             )
 
-        receiver_account.balance += amount
-        AccountRepository.update_account_balance(db, receiver_account)
+        account.balance += amount
+
+        AccountRepository.update_account_balance(
+            db,
+            account
+        )
 
         transaction_data = {
-            "receiver_account": account_number,
+
+            "account_id": account.id,
+
             "amount": amount,
+
             "transaction_type": "DEPOSIT",
+
             "status": "SUCCESS"
         }
 
@@ -56,21 +73,25 @@ class TransactionService:
         account_number: str,
         amount: float
     ):
-        sender_account = AccountRepository.get_account_by_number(
-            db,
-            account_number
+
+        account = (
+            AccountRepository.get_account_by_number(
+                db,
+                account_number
+            )
         )
 
-        if not sender_account:
+        if not account:
             raise HTTPException(
                 status_code=404,
-                detail="Sender account not found"
+                detail="Account not found"
             )
 
-        if sender_account.email != user.email:
+        # Logged-in user can use only own account
+        if account.user_id != user.id:
             raise HTTPException(
                 status_code=403,
-                detail="Not authorized to withdraw from this account"
+                detail="Not authorized"
             )
 
         if amount <= 0:
@@ -79,19 +100,27 @@ class TransactionService:
                 detail="Amount must be greater than zero"
             )
 
-        if sender_account.balance < amount:
+        if account.balance < amount:
             raise HTTPException(
                 status_code=400,
-                detail="Insufficient account balance"
+                detail="Insufficient balance"
             )
 
-        sender_account.balance -= amount
-        AccountRepository.update_account_balance(db, sender_account)
+        account.balance -= amount
+
+        AccountRepository.update_account_balance(
+            db,
+            account
+        )
 
         transaction_data = {
-            "sender_account": account_number,
+
+            "account_id": account.id,
+
             "amount": amount,
+
             "transaction_type": "WITHDRAW",
+
             "status": "SUCCESS"
         }
 
@@ -104,35 +133,42 @@ class TransactionService:
     def transfer(
         db: Session,
         user: User,
-        sender_account: str,
-        receiver_account: str,
+        sender_account_number: str,
+        receiver_account_number: str,
         amount: float
     ):
-        sender = AccountRepository.get_account_by_number(
-            db,
-            sender_account
-        )
-        receiver = AccountRepository.get_account_by_number(
-            db,
-            receiver_account
+
+        sender_account = (
+            AccountRepository.get_account_by_number(
+                db,
+                sender_account_number
+            )
         )
 
-        if not sender:
+        receiver_account = (
+            AccountRepository.get_account_by_number(
+                db,
+                receiver_account_number
+            )
+        )
+
+        if not sender_account:
             raise HTTPException(
                 status_code=404,
                 detail="Sender account not found"
             )
 
-        if not receiver:
+        if not receiver_account:
             raise HTTPException(
                 status_code=404,
                 detail="Receiver account not found"
             )
 
-        if sender.email != user.email:
+        # Logged-in user can transfer only from own account
+        if sender_account.user_id != user.id:
             raise HTTPException(
                 status_code=403,
-                detail="Not authorized to transfer from this account"
+                detail="Not authorized"
             )
 
         if amount <= 0:
@@ -141,23 +177,36 @@ class TransactionService:
                 detail="Amount must be greater than zero"
             )
 
-        if sender.balance < amount:
+        if sender_account.balance < amount:
             raise HTTPException(
                 status_code=400,
-                detail="Insufficient account balance"
+                detail="Insufficient balance"
             )
 
-        sender.balance -= amount
-        receiver.balance += amount
+        sender_account.balance -= amount
 
-        AccountRepository.update_account_balance(db, sender)
-        AccountRepository.update_account_balance(db, receiver)
+        receiver_account.balance += amount
+
+        AccountRepository.update_account_balance(
+            db,
+            sender_account
+        )
+
+        AccountRepository.update_account_balance(
+            db,
+            receiver_account
+        )
 
         transaction_data = {
-            "sender_account": sender_account,
-            "receiver_account": receiver_account,
+
+            "sender_account_id": sender_account.id,
+
+            "receiver_account_id": receiver_account.id,
+
             "amount": amount,
+
             "transaction_type": "TRANSFER",
+
             "status": "SUCCESS"
         }
 
@@ -169,9 +218,9 @@ class TransactionService:
     @staticmethod
     def get_transaction(
         db: Session,
-        user: User,
         transaction_id: int
     ):
+
         transaction = (
             TransactionRepository.get_transaction_by_id(
                 db,
@@ -193,9 +242,27 @@ class TransactionService:
         user: User,
         account_number: str
     ):
-        return (
-            TransactionRepository.get_transaction_history(
+
+        account = (
+            AccountRepository.get_account_by_number(
                 db,
                 account_number
             )
+        )
+
+        if not account:
+            raise HTTPException(
+                status_code=404,
+                detail="Account not found"
+            )
+
+        if account.user_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Not authorized"
+            )
+
+        return TransactionRepository.get_transaction_history(
+            db,
+            account.id
         )

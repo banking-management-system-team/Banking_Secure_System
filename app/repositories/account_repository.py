@@ -32,6 +32,10 @@ class AccountRepository:
         return db.query(Account).filter(Account.user_id == user_id).all()
 
     @staticmethod
+    def get_account_by_number(db: Session, account_number: str):
+        return db.query(Account).filter(Account.account_number == account_number).first()
+
+    @staticmethod
     def get_user_account_by_id(db: Session, account_id: int, user_id: int):
         return db.query(Account).filter(
             Account.id == account_id,
@@ -71,4 +75,11 @@ class AccountRepository:
         db.delete(account)
         db.commit()
 
-        return True    
+        return True
+
+    @staticmethod
+    def update_account_balance(db: Session, account: Account):
+        db.add(account)
+        db.commit()
+        db.refresh(account)
+        return account    

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class LoanCreate(BaseModel):
 
-    user_id: int
+    account_id: int
     loan_type: str
     amount: float
     interest_rate: float
@@ -13,7 +13,7 @@ class LoanCreate(BaseModel):
 class LoanResponse(BaseModel):
 
     id: int
-    user_id: int
+    account_id: int
     loan_type: str
     amount: float
     interest_rate: float

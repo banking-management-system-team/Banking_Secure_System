@@ -9,7 +9,7 @@ def create_loan(
 ):
 
     new_loan = Loan(
-        user_id=loan_data.user_id,
+        account_id=loan_data.account_id,
         loan_type=loan_data.loan_type,
         amount=loan_data.amount,
         interest_rate=loan_data.interest_rate,

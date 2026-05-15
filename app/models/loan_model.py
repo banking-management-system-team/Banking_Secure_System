@@ -22,10 +22,11 @@ class Loan(Base):
         index=True
     )
 
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id")
-    )
+    account_id = Column(
+    Integer,
+    ForeignKey("accounts.id")
+)
+    
 
     loan_type = Column(
         String,
@@ -57,4 +58,4 @@ class Loan(Base):
         server_default=func.now()
     )
 
-    user = relationship("User")
+    account = relationship("Account")

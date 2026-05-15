@@ -1,5 +1,9 @@
 from sqlalchemy.orm import Session
 
+from fastapi import HTTPException
+
+from app.models.account_model import Account
+
 from app.repositories.loan_repository import (
     create_loan,
     get_all_loans,
@@ -11,8 +15,29 @@ from app.repositories.loan_repository import (
 
 def create_loan_service(
     db: Session,
-    loan_data
+    loan_data,
+    current_user
 ):
+
+    account = db.query(Account).filter(
+        Account.id == loan_data.account_id
+    ).first()
+
+    # Account not found
+    if not account:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Account not found"
+        )
+
+    # Another user's account
+    if account.user_id != current_user.id:
+
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot use another user's account"
+        )
 
     loan = create_loan(
         db,
@@ -47,6 +72,7 @@ def get_loan_by_id_service(
     )
 
     if not loan:
+
         return {
             "message": "Loan not found"
         }
@@ -69,6 +95,7 @@ def update_loan_service(
     )
 
     if not loan:
+
         return {
             "message": "Loan not found"
         }
@@ -90,6 +117,7 @@ def delete_loan_service(
     )
 
     if not loan:
+
         return {
             "message": "Loan not found"
         }

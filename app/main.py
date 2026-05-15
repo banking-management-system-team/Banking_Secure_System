@@ -21,6 +21,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(account_router)
 app.include_router(loan_router)
 
 @app.get('/')
@@ -28,4 +29,3 @@ def home():
     return {
         'message': 'Banking API Running Successfully'
     }
-app.include_router(account_router)

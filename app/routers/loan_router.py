@@ -39,7 +39,8 @@ def create_loan(
 
         return create_loan_service(
             db,
-            loan
+            loan,
+            current_user
         )
 
     except Exception as e:
